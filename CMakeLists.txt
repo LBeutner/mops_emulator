@@ -18,6 +18,12 @@ target_sources(mops INTERFACE
   BASE_DIRS include
   FILES
     include/mops/mops.hpp
+    include/mops/types.hpp
+    include/mops/host_concepts.hpp
+    include/mops/decode.hpp
+    include/mops/detail/decode_cpy.hpp
+    include/mops/detail/decode_set.hpp
+    include/mops/detail/decode_fields.hpp
 )
 target_compile_features(mops INTERFACE cxx_std_20)
 
