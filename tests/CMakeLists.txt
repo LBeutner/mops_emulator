@@ -6,8 +6,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+add_library(mops_support INTERFACE)
+target_sources(mops_support INTERFACE
+  FILE_SET HEADERS
+  FILES
+    support/printers.hpp
+)
+
 add_executable(test_mops test_mops.cpp)
-target_link_libraries(test_mops PRIVATE mops mops_warnings GTest::gtest_main)
+target_link_libraries(test_mops PRIVATE mops::mops mops_warnings mops_support GTest::gtest_main)
 
 include(GoogleTest)
 gtest_discover_tests(test_mops)
