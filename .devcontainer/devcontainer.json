@@ -1,0 +1,26 @@
+{
+  "name": "MOPS Emulator",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "remoteUser": "ubuntu",
+  "workspaceFolder": "/workspace",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "ms-vscode.cmake-tools",
+        "vadimcn.vscode-lldb"
+      ],
+      "settings": {
+        "editor.tabSize": 2,
+        "cmake.modifyLists": "no",
+        "clangd.arguments": [
+          "--header-insertion=never"
+        ]
+      }
+    }
+  }
+}

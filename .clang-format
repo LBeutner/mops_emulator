@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: c++20
+
+AllowShortFunctionsOnASingleLine: Inline
+PointerAlignment: Left
+ColumnLimit: 120
+BreakStringLiterals: false

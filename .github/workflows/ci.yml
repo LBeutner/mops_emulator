@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  DEV: docker run --rm --user root -v ${{github.workspace}}:/workspace mops-dev
+
+jobs:
+  ci:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build dev container image
+        run: docker build -t mops-dev .devcontainer
+
+      - name: Lint
+        run: |
+          $DEV cmake --preset debug
+          $DEV cmake --build --preset format-check
+          $DEV cmake --build --preset tidy
+
+      - name: Debug
+        run: |
+          $DEV cmake --build --preset debug
+          $DEV ctest --preset debug --no-tests=error
+
+      - name: ASan/UBSan
+        run: |
+          $DEV cmake --preset asan
+          $DEV cmake --build --preset asan
+          $DEV ctest --preset asan --no-tests=error
+
+      - name: Release
+        run: |
+          $DEV cmake --preset release
+          $DEV cmake --build --preset release
+          $DEV ctest --preset release --no-tests=error
