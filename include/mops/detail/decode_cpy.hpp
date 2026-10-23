@@ -20,8 +20,9 @@ constexpr std::optional<Stage> decode_cpy_stage(std::uint8_t bits) {
     return Stage::Main;
   case 0b10:
     return Stage::Epilogue;
+  default:
+    return std::nullopt;
   }
-  return std::nullopt;
 }
 
 // op2[0] encodes write privilege level, op2[1] encodes read privilege level
