@@ -13,8 +13,14 @@ target_sources(mops_support INTERFACE
     support/printers.hpp
 )
 
-add_executable(test_mops test_mops.cpp)
+add_executable(test_mops
+  decode/test_decode_golden.cpp
+  decode/test_decode_negative.cpp
+)
 target_link_libraries(test_mops PRIVATE mops::mops mops_warnings mops_support GTest::gtest_main)
+target_compile_definitions(test_mops PRIVATE
+  MOPS_GOLDEN_FILE="${CMAKE_CURRENT_SOURCE_DIR}/data/decode_golden.txt"
+)
 
 include(GoogleTest)
 gtest_discover_tests(test_mops)

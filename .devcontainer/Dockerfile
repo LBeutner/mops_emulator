@@ -32,8 +32,7 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 \
   && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100 \
   && update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-18 100 \
   && update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-18 100 \
-  && update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-18 100 \
-  && update-alternatives --install /usr/bin/llvm-objdump llvm-objdump /usr/bin/llvm-objdump-18 100
+  && update-alternatives --install /usr/bin/llvm-mc llvm-mc /usr/bin/llvm-mc-18 100
 
 # Set default compilers
 ENV CC=clang

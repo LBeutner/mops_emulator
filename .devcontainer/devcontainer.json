@@ -12,7 +12,8 @@
       "extensions": [
         "llvm-vs-code-extensions.vscode-clangd",
         "ms-vscode.cmake-tools",
-        "vadimcn.vscode-lldb"
+        "vadimcn.vscode-lldb",
+        "ms-python.python"
       ],
       "settings": {
         "editor.tabSize": 2,
