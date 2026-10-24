@@ -37,17 +37,12 @@ constexpr CpyAttributes decode_cpy_attr(std::uint8_t bits) {
   return CpyAttributes{.read = read, .write = write};
 }
 
-// check for constrained-unpredictable behaviour
-constexpr bool decode_cpy_registers(std::uint8_t rd, std::uint8_t rs, std::uint8_t rn) {
-  return (rs == rn) || (rs == rd) || (rn == rd) || (rd == 31) || (rs == 31) || (rn == 31);
-}
-
 constexpr DecodeResult decode_cpy(const RawFields& fields) {
   // op1[1:0] encodes stage, [00] = Prologue, [01] = Main, [10] = Epilogue
   const auto stage{decode_cpy_stage(fields.op1)};
   // Should never return std::nullopt, unless called directly
   if (!stage) {
-    return DecodeError::Undefined;
+    return Undefined{};
   }
 
   // o0[0] encodes type of CPY, either [0] = CPYF or [1] = CPY
@@ -55,11 +50,6 @@ constexpr DecodeResult decode_cpy(const RawFields& fields) {
 
   // op2[3:0] encodes attributes
   const CpyAttributes attr{decode_cpy_attr(fields.op2)};
-
-  // Constrained-unpredictable behaviour, treated as UNDEFINED
-  if (decode_cpy_registers(fields.rd, fields.rs, fields.rn)) {
-    return DecodeError::Undefined;
-  }
 
   return CpyInstruction{.family = family,
                         .stage = *stage,

@@ -1,5 +1,7 @@
 #pragma once
 #include "mops/types.hpp"
+#include <format>
+#include <gtest/gtest.h>
 #include <ostream>
 
 namespace mops {
@@ -31,67 +33,47 @@ inline void PrintTo(CpyFamily f, std::ostream* os) {
   *os << "CpyFamily(" << static_cast<int>(f) << ")";
 }
 
-inline void PrintTo(DecodeError e, std::ostream* os) {
-  switch (e) {
-  case DecodeError::NotMops:
-    *os << "NotMops";
-    return;
-  case DecodeError::Undefined:
-    *os << "Undefined";
-    return;
-  case DecodeError::Unsupported:
-    *os << "Unsupported";
-    return;
-  }
-  *os << "DecodeError(" << static_cast<int>(e) << ")";
-}
-
-inline void PrintTo(StageResult r, std::ostream* os) {
-  switch (r) {
-  case StageResult::Done:
-    *os << "Done";
-    return;
-  case StageResult::Interrupted:
-    *os << "Continue";
-    return;
-  case StageResult::Fault:
-    *os << "Fault";
-    return;
-  case StageResult::MopsException:
-    *os << "MopsException";
-    return;
-  }
-  *os << "StepResult(" << static_cast<int>(r) << ")";
-}
-
 inline void PrintTo(AccessAttributes attr, std::ostream* os) {
-  *os << "{";
-  if (attr.unprivileged) {
-    *os << " unpriv";
-  }
-  if (attr.non_temporal) {
-    *os << " nt";
-  }
-  *os << " }";
+  *os << std::format("{{{}{} }}", attr.unprivileged ? " unpriv" : "", attr.non_temporal ? " nt" : "");
 }
 
 inline void PrintTo(const CpyInstruction& instr, std::ostream* os) {
-  PrintTo(instr.family, os);
-  *os << " ";
-  PrintTo(instr.stage, os);
-  *os << " x" << int{instr.rd} << ", x" << int{instr.rs} << ", x" << int{instr.rn};
-  *os << " read=";
-  PrintTo(instr.read, os);
-  *os << " write=";
-  PrintTo(instr.write, os);
+  *os << std::format("{} {} x{}, x{}, x{} read={} write={}", testing::PrintToString(instr.family),
+                     testing::PrintToString(instr.stage), instr.rd, instr.rs, instr.rn,
+                     testing::PrintToString(instr.read), testing::PrintToString(instr.write));
 }
 
 inline void PrintTo(const SetInstruction& instr, std::ostream* os) {
-  *os << "SET ";
-  PrintTo(instr.stage, os);
-  *os << " x" << int{instr.rd} << ", x" << int{instr.rs} << ", x" << int{instr.rn};
-  *os << " write=";
-  PrintTo(instr.write, os);
+  *os << std::format("SET {} x{}, x{}, x{} write={}", testing::PrintToString(instr.stage), instr.rd, instr.rs, instr.rn,
+                     testing::PrintToString(instr.write));
+}
+
+inline void PrintTo([[maybe_unused]] const Completed completed, std::ostream* os) {
+  *os << "Completed";
+}
+
+inline void PrintTo([[maybe_unused]] const Interrupted interrupted, std::ostream* os) {
+  *os << "Interrupted";
+}
+
+inline void PrintTo(const Fault fault, std::ostream* os) {
+  *os << std::format("Fault{{0x{:x}, {}}}", fault.address, fault.is_write ? "write" : "read");
+}
+
+inline void PrintTo(const MopsException exception, std::ostream* os) {
+  *os << std::format("MopsException{{iss=0x{:x}}}", exception.iss);
+}
+
+inline void PrintTo([[maybe_unused]] const Undefined undefined, std::ostream* os) {
+  *os << "Undefined";
+}
+
+inline void PrintTo([[maybe_unused]] const Unsupported unsupported, std::ostream* os) {
+  *os << "Unsupported";
+}
+
+inline void PrintTo([[maybe_unused]] const NotMops notmops, std::ostream* os) {
+  *os << "NotMops";
 }
 
 } // namespace mops

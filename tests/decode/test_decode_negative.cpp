@@ -8,9 +8,9 @@
 
 namespace {
 
-const mops::DecodeResult kUnsupported{mops::DecodeError::Unsupported};
-const mops::DecodeResult kUndefined{mops::DecodeError::Undefined};
-const mops::DecodeResult kNotMops{mops::DecodeError::NotMops};
+const mops::DecodeResult kUnsupported{mops::Unsupported{}};
+const mops::DecodeResult kUndefined{mops::Undefined{}};
+const mops::DecodeResult kNotMops{mops::NotMops{}};
 
 TEST(DecodeSETG, ValidEncodingsAreUnsupported) {
   EXPECT_EQ(mops::decode(0x1dc20420), kUnsupported); // setgp [x0]!, x1!, x2

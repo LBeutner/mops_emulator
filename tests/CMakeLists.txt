@@ -16,6 +16,7 @@ target_sources(mops_support INTERFACE
 add_executable(test_mops
   decode/test_decode_golden.cpp
   decode/test_decode_negative.cpp
+  decode/test_decode_cu.cpp
 )
 target_link_libraries(test_mops PRIVATE mops::mops mops_warnings mops_support GTest::gtest_main)
 target_compile_definitions(test_mops PRIVATE

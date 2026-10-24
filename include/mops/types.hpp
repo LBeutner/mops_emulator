@@ -4,7 +4,7 @@
 
 namespace mops {
 
-// helper for std::visit
+// Helper for std::visit
 template <class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
@@ -41,19 +41,50 @@ struct SetInstruction {
 
 using Decoded = std::variant<CpyInstruction, SetInstruction>;
 
-enum class DecodeError : std::uint8_t {
-  NotMops,    // instruction not part of FEAT_MOPS
-  Undefined,  // part of FEAT_MOPS but undefined or constrained unpredictable
-  Unsupported // part of FEAT_MOPS but not implemented
+///////////////////////////////////////////////////////////////////////
+// Shared return types for decode, execute and step(decode + execute) //
+///////////////////////////////////////////////////////////////////////
+
+// Instruction completed, PC advances
+struct Completed {
+  bool operator==(const Completed&) const = default;
 };
 
-using DecodeResult = std::variant<Decoded, DecodeError>;
-
-enum class StageResult : std::uint8_t {
-  Done,
-  Interrupted,
-  Fault,        // memory access error
-  MopsException // f.e. option mismatch
+// Main stage interrupted, registers hold progress, PC stays
+struct Interrupted {
+  bool operator==(const Interrupted&) const = default;
 };
+
+// Memory access failed, PC stays
+struct Fault {
+  std::uint64_t address;
+  bool is_write;
+  bool operator==(const Fault&) const = default;
+};
+
+// Memory Copy and Memory Set exceptions (D1.4.5.8)
+struct MopsException {
+  std::uint32_t iss;
+  bool operator==(const MopsException&) const = default;
+};
+
+// Non existent encoding or constrained unpredictable
+struct Undefined {
+  bool operator==(const Undefined&) const = default;
+};
+
+// Valid, but not implemented MOPS instruction (SETG, OptionA)
+struct Unsupported {
+  bool operator==(const Unsupported&) const = default;
+};
+
+// Non MOPS instruction
+struct NotMops {
+  bool operator==(const NotMops&) const = default;
+};
+
+using DecodeResult = std::variant<Decoded, Undefined, Unsupported, NotMops>;
+using ExecuteResult = std::variant<Completed, Interrupted, Fault, MopsException, Undefined, Unsupported>;
+using StepResult = std::variant<Completed, Interrupted, Fault, MopsException, Undefined, Unsupported, NotMops>;
 
 } // namespace mops

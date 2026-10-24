@@ -53,7 +53,7 @@ GoldenEntry parse_line(const std::string& line) {
   const std::uint32_t word{static_cast<std::uint32_t>(std::stoul(word_text, nullptr, 16))};
 
   if (result_text == "undefined") {
-    return GoldenEntry{.word = word, .golden = mops::DecodeError::Undefined};
+    return GoldenEntry{.word = word, .golden = mops::Undefined{}};
   }
   if (result_text != "ok") {
     throw std::runtime_error("Unknown result in: " + line);
