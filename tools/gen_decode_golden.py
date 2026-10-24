@@ -2,8 +2,9 @@
 Generates tests/data/decode_golden.txt, the expected result of mops::decode
 
 Uses LLVM disassembler as reference.
-The only derivation is the constrained-unpredictable register rules (K1.2.17.17) and (K1.2.17.2),
-Xn == 31, which LLVM doesnt enforce.
+The only deviation is the constrained-unpredictable register rules (K1.2.17.17) and (K1.2.17.2),
+that are checked at execute time. Due to LLVM rejecting some and accepting others they are left out
+of the golden data and tested seperately in tests/decode/test_decode_cu.cpp
 
 SETG* is not generated at all. It will be covered by the negative tests.
 
@@ -86,15 +87,17 @@ def parse(word) -> Fields:
   w_unpriv, w_nt = write
   return family, stage, rd, rs, rn, int(r_unpriv), int(r_nt), int(w_unpriv), int(w_nt)
 
-# All cases in (K1.2.17.17) and (K1.2.17.2) are treated as constrained-unpredictable by the library
-# LLVM accepts Xn == 31, while rejecting all others
-# This rule makes its behaviour match the libraries
-def constrained_unpredictable(fields: Fields) -> bool:
-  rn = fields[4]
-  return rn == 31
+# All cases in (K1.2.17.17) and (K1.2.17.2) are decided at execute time
+# Not part of the golden file, tested seperately in tests/decode/test_decode_cu.cpp
+def is_constrained_unpredictable(word: int) -> bool:
+  rd, rn, rs = word & 0b11111, (word >> 5) & 0b11111, (word >> 16) & 0b11111
+  is_set = (word >> 22) & 0b11 == 0b11
+  if (rs == rn) or (rs == rd) or (rn == rd):
+    return True
+  return (rd == 31) or (rn == 31) or (not is_set and rs == 31)
 
 def main() -> None:
-  words = list(get_word())
+  words = [word for word in get_word() if not is_constrained_unpredictable(word)]
   asms = disassemble(words)
 
   OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -107,11 +110,7 @@ def main() -> None:
         f.write(f"{word:#010x} undefined\n")
         continue
 
-      fields = parse(asm)
-      if constrained_unpredictable(fields):
-        f.write(f"{word:#010x} undefined\n")
-      else:
-        f.write(f"{word:#010x} ok " + " ".join(map(str, fields)) + "\n")
+      f.write(f"{word:#010x} ok " + " ".join(map(str, parse(asm))) + "\n")
 
 if __name__ == "__main__":
   main()

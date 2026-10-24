@@ -27,30 +27,20 @@ constexpr AccessAttributes decode_set_attr(std::uint8_t bits) {
                           .non_temporal = static_cast<bool>((bits >> 1) & 0b1)};
 }
 
-// check for constrained-unpredictable behaviour
-constexpr bool decode_set_registers(std::uint8_t rd, std::uint8_t rs, std::uint8_t rn) {
-  return (rs == rn) || (rs == rd) || (rn == rd) || (rd == 31) || (rn == 31);
-}
-
 constexpr DecodeResult decode_set(const RawFields& fields) {
   // o0[0] encodes type of SET instruction, SETG not supported
   if (fields.o0 == 0b1) {
-    return DecodeError::Unsupported;
+    return Unsupported{};
   }
 
   // op2[3:2] encodes stage
   const auto stage{decode_set_stage(fields.op2 >> 2)};
   if (!stage) {
-    return DecodeError::Undefined;
+    return Undefined{};
   }
 
   // op2[1:0] encodes attributes
   const AccessAttributes attr{decode_set_attr(fields.op2 & 0b11)};
-
-  // Constrained-unpredictable behaviour, treated as UNDEFINED
-  if (decode_set_registers(fields.rd, fields.rs, fields.rn)) {
-    return DecodeError::Undefined;
-  }
 
   return SetInstruction{.stage = *stage, .rd = fields.rd, .rs = fields.rs, .rn = fields.rn, .write = attr};
 }

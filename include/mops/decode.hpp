@@ -8,11 +8,11 @@ namespace mops {
 
 constexpr DecodeResult decode(std::uint32_t word) noexcept {
   if (!detail::is_mops(word)) {
-    return DecodeError::NotMops;
+    return NotMops{};
   }
   const detail::RawFields fields{detail::extract_fields(word)};
   if (fields.size != 0b00) {
-    return DecodeError::Undefined;
+    return Undefined{};
   }
   return detail::is_set_family(fields) ? detail::decode_set(fields) : detail::decode_cpy(fields);
 }
