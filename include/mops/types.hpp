@@ -9,8 +9,6 @@ template <class... Ts> struct overloaded : Ts... {
   using Ts::operator()...;
 };
 
-enum class Option : std::uint8_t { A, B };
-
 enum class Stage : std::uint8_t { Prologue, Main, Epilogue };
 
 enum class CpyFamily : std::uint8_t { Cpy, CpyF };
@@ -86,5 +84,19 @@ struct NotMops {
 using DecodeResult = std::variant<Decoded, Undefined, Unsupported, NotMops>;
 using ExecuteResult = std::variant<Completed, Interrupted, Fault, MopsException, Undefined, Unsupported>;
 using StepResult = std::variant<Completed, Interrupted, Fault, MopsException, Undefined, Unsupported, NotMops>;
+
+////////////////////////////////////
+// Implementation Defined Choices //
+////////////////////////////////////
+
+struct ImplDefined {
+  // SETPreSizeChoice() and SETPostSizeChoice()
+  std::int64_t set_prologue_bytes{0};
+  std::int64_t set_epilogue_bytes{0};
+
+  // SETSizeChoice()
+  // Atleast 1
+  std::int64_t set_block_bytes{4096};
+};
 
 } // namespace mops

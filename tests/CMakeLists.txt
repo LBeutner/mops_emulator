@@ -11,12 +11,14 @@ target_sources(mops_support INTERFACE
   FILE_SET HEADERS
   FILES
     support/printers.hpp
+    support/dummy_host.hpp
 )
 
 add_executable(test_mops
   decode/test_decode_golden.cpp
   decode/test_decode_negative.cpp
   decode/test_decode_cu.cpp
+  execute/test_execute_set.cpp
 )
 target_link_libraries(test_mops PRIVATE mops::mops mops_warnings mops_support GTest::gtest_main)
 target_compile_definitions(test_mops PRIVATE
@@ -24,4 +26,4 @@ target_compile_definitions(test_mops PRIVATE
 )
 
 include(GoogleTest)
-gtest_discover_tests(test_mops)
+gtest_discover_tests(test_mops NO_PRETTY_VALUES)

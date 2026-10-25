@@ -8,3 +8,5 @@ Checks: >
   -readability-identifier-length
 HeaderFilterRegex: '.*/include/.*'
 WarningsAsErrors: '*'
+CheckOptions:
+  readability-function-cognitive-complexity.Threshold: 50
