@@ -19,6 +19,7 @@ add_executable(test_mops
   decode/test_decode_negative.cpp
   decode/test_decode_cu.cpp
   execute/test_execute_set.cpp
+  step/test_step_set.cpp
 )
 target_link_libraries(test_mops PRIVATE mops::mops mops_warnings mops_support GTest::gtest_main)
 target_compile_definitions(test_mops PRIVATE

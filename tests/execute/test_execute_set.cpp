@@ -27,9 +27,8 @@ constexpr std::byte kValue{0xAB};
 // Host memory prefilled with repeating kMem
 constexpr std::byte kMem{0xCD};
 
-// PSTATE, as SETP* leaves it
+// PSTATE for option A and B after Prologue
 constexpr std::uint32_t kOptionB{0b0010};
-
 constexpr std::uint32_t kOptionA{0b0000};
 
 // Max block size
@@ -103,7 +102,7 @@ TEST_P(SetSweep, BehavesLikeMemset) {
   EXPECT_EQ(run(host, Stage::Epilogue), kCompleted);
   EXPECT_EQ(host.nzcv, kOptionB);
   EXPECT_EQ(host.regs[kDestReg], kDest + size);
-  EXPECT_EQ(host.regs[kSizeReg], 0U);
+  EXPECT_EQ(host.regs[kSizeReg], 0);
 
   EXPECT_TRUE(mem_correct(host, size));
 }

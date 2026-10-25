@@ -29,6 +29,7 @@ target_sources(mops INTERFACE
     include/mops/detail/execute_common.hpp
     include/mops/detail/execute_set.hpp
     include/mops/detail/syndrome.hpp
+    include/mops/step.hpp
 )
 target_compile_features(mops INTERFACE cxx_std_20)
 
