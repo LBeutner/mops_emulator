@@ -25,6 +25,10 @@ target_sources(mops INTERFACE
     include/mops/detail/decode_set.hpp
     include/mops/detail/decode_fields.hpp
     include/mops/detail/constrained_unpredictable.hpp
+    include/mops/execute.hpp
+    include/mops/detail/execute_common.hpp
+    include/mops/detail/execute_set.hpp
+    include/mops/detail/syndrome.hpp
 )
 target_compile_features(mops INTERFACE cxx_std_20)
 

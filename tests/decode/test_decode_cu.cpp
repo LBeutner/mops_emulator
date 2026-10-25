@@ -3,7 +3,6 @@
 #include "support/printers.hpp"
 #include <cstdint>
 #include <gtest/gtest.h>
-#include <optional>
 
 // Constrained-unpredictable register combinations (K1.2.17.2, K1.2.17.17) are not rejected by decode,
 // they are handled by execute. LLVM refuses to assemble them, so they are not part of the
@@ -21,13 +20,13 @@ constexpr AccessAttributes kNonTemporal{.unprivileged = false, .non_temporal = t
 constexpr AccessAttributes kUnprivNonTemporal{.unprivileged = true, .non_temporal = true};
 
 mops::DecodeResult set_insn(Stage stage, std::uint8_t rd, std::uint8_t rs, std::uint8_t rn, AccessAttributes write) {
-  return mops::Decoded{mops::SetInstruction{.stage = stage, .rd = rd, .rs = rs, .rn = rn, .write = write}};
+  return mops::SetInstruction{.stage = stage, .rd = rd, .rs = rs, .rn = rn, .write = write};
 }
 
 mops::DecodeResult cpy_insn(CpyFamily family, Stage stage, std::uint8_t rd, std::uint8_t rs, std::uint8_t rn,
                             AccessAttributes read, AccessAttributes write) {
-  return mops::Decoded{mops::CpyInstruction{
-      .family = family, .stage = stage, .rd = rd, .rs = rs, .rn = rn, .read = read, .write = write}};
+  return mops::CpyInstruction{
+      .family = family, .stage = stage, .rd = rd, .rs = rs, .rn = rn, .read = read, .write = write};
 }
 
 } // namespace
@@ -62,7 +61,5 @@ TEST(DecodeConstrainedUnpredictable, CpyKeepsRegistersAndAttributes) {
 }
 
 // XZR as Xs is valid for SET, unlike CPY
-static_assert(mops::detail::set_constrained_unpredictable(0, 31, 2) == std::nullopt);
-
-// Overlap check comes before the R31 check, and the first one decides
-static_assert(mops::detail::cpy_constrained_unpredictable(31, 31, 2) == mops::detail::CuKind::RegisterOverlap);
+static_assert(!mops::detail::set_constrained_unpredictable(0, 31, 2));
+static_assert(mops::detail::cpy_constrained_unpredictable(0, 31, 2));
