@@ -119,8 +119,8 @@ constexpr std::uint32_t encode(const mops::SetInstruction& instr) {
   const std::uint32_t stage{static_cast<std::uint32_t>(instr.stage)}; // Prologue 00, Main 01, Epilogue 10
   const std::uint32_t options{(instr.write.unprivileged ? 0b01U : 0U) | (instr.write.non_temporal ? 0b10U : 0U)};
   const std::uint32_t set{0x19C0'0400U}; // MOPS not SETG*
-  return set | (std::uint32_t{instr.rs} << 16) | (((stage << 2) | options) << 12) |
-         (std::uint32_t{instr.rn} << 5) | instr.rd;
+  return set | (std::uint32_t{instr.rs} << 16) | (((stage << 2) | options) << 12) | (std::uint32_t{instr.rn} << 5) |
+         instr.rd;
 }
 
 // Test encodings from tools/asm2word.py
