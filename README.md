@@ -32,16 +32,30 @@ cmake --preset asan && cmake --build --preset asan && ctest --preset asan
 # formatting and clang-tidy
 cmake --build --preset format-check && cmake --build --preset tidy
 # run the demo
-./build/debug/demo
+./build/debug/demo examples/example.bin
 ```
 
 ### Native
 
-You need `CMake 3.25+`, `Ninja` and `clang++ 18` with `libstdc++ 13`. The asan preset also needs
-`libclang-rt-18-dev`, the lint presets need `clang-format-18` and `clang-tidy-18`.
+You need `CMake 3.25+`, `Ninja` and `clang++ 18` with `libstdc++ 13`. The asan preset also needs `libclang-rt-18-dev`, the lint presets need `clang-format-18` and `clang-tidy-18`.
 GoogleTest is downloaded on the first configure.
 After that, the commands are the same as above.
-`tools/` has two Python 3 scripts that use `llvm-mc-18`.
+`tools/` has three Python 3 scripts that use `llvm-mc-18`.
+
+### Demo
+
+The demo runs a flat binary of AArch64 instructions.
+Besides SET* it understands MOVZ, so a program can load its own
+registers, see `examples/example.s`.
+To build the binary:
+
+```bash
+python3 tools/asm2program.py my_program.s my_program.bin
+./build/debug/demo my_program.bin
+```
+
+The registers and flags that change are printed after each instruction and the memory at the end.
+The interrupt and the `ImplDefined` choices are set in `main`.
 
 ## Scope
 
@@ -109,10 +123,9 @@ All tests use GoogleTest and run in CI for the debug, asan and release builds.
 - Implementation choices that depend on the address can't be expressed.
 - When a chunk write fails, the byte by byte retry writes some bytes twice. This might cause problems for memory with side effects.
 - `host_ptr` (direct memory access) is not covered by tests.
-- The demo runs a fixed program built with its `encode()` helper. To try another sequence, change it in `main` or use words from `tools/asm2word.py`.
 
 ## With more time
 
 - CPYF*, then CPY*, reusing the SET structure.
-- Function callbacks in `ImplDefined` for implementation choices that depend on the address. Expansion is possible in this architecture via function callbacks in `ImplDefined` instead of fixed values.
+- Function callbacks in `ImplDefined` for implementation choices that depend on the address.
 - A test host with `host_ptr()` to cover direct memory access.

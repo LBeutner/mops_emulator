@@ -41,7 +41,7 @@ if(MOPS_WARNINGS_AS_ERRORS)
 endif()
 
 if(MOPS_BUILD_DEMO)
-  add_executable(demo examples/demo.cpp)
+  add_executable(demo examples/demo.cpp examples/movz.hpp)
   target_link_libraries(demo PRIVATE mops::mops mops_warnings)
 endif()
 

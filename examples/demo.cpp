@@ -1,11 +1,16 @@
 #include "mops/mops.hpp"
+#include "movz.hpp"
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <span>
+#include <stdexcept>
 #include <string_view>
 #include <variant>
 #include <vector>
@@ -108,28 +113,41 @@ static_assert(mops::HasImplDefined<MopsAdapter>);
 static_assert(mops::HasYield<MopsAdapter>);
 
 // Helper for printing CPU state
-void print_cpu(const CpuState& cpu, std::string_view message) {
-  std::cout << std::format("{} | PC: 0x{:02X} | X0(dest): 0x{:04X} | X1(size): {} | NZCV: {:d}{:d}{:d}{:d}", message,
-                           cpu.pc, cpu.x.at(0), cpu.x.at(1), cpu.n, cpu.z, cpu.c, cpu.v)
-            << std::endl;
+void print_changes(const CpuState& before, const CpuState& after, std::string_view message) {
+  std::cout << std::format("0x{:04X}: {:<12} |", before.pc, message);
+  for (std::size_t i{0}; i < after.x.size(); i++) {
+    if (before.x.at(i) != after.x.at(i)) {
+      std::cout << std::format(" (reg x{}: 0x{:X} -> 0x{:X})", i, before.x.at(i), after.x.at(i));
+    }
+  }
+
+  const auto flags{
+      [](const CpuState& state) { return std::format("{:d}{:d}{:d}{:d}", state.n, state.z, state.c, state.v); }};
+
+  if (flags(before) != flags(after)) {
+    std::cout << std::format(" (nzcv {} -> {})", flags(before), flags(after));
+  }
+  std::cout << std::endl;
 }
 
-// Helper for easier program composition
-constexpr std::uint32_t encode(const mops::SetInstruction& instr) {
-  const std::uint32_t stage{static_cast<std::uint32_t>(instr.stage)}; // Prologue 00, Main 01, Epilogue 10
-  const std::uint32_t options{(instr.write.unprivileged ? 0b01U : 0U) | (instr.write.non_temporal ? 0b10U : 0U)};
-  const std::uint32_t set{0x19C0'0400U}; // MOPS not SETG*
-  return set | (std::uint32_t{instr.rs} << 16) | (((stage << 2) | options) << 12) | (std::uint32_t{instr.rn} << 5) |
-         instr.rd;
-}
+std::vector<std::uint32_t> load_program(const std::filesystem::path& path) {
+  std::ifstream file{path, std::ios::binary};
+  if (!file) {
+    throw std::runtime_error("cannot open: " + path.string());
+  }
+  const std::vector<unsigned char> buf{std::istreambuf_iterator<char>{file}, {}};
+  if (buf.size() % 4 != 0) {
+    throw std::runtime_error("not multiple of 4 bytes");
+  }
 
-// Test encodings from tools/asm2word.py
-static_assert(encode(mops::SetInstruction{.stage = mops::Stage::Prologue, .rd = 0, .rs = 2, .rn = 1, .write = {}}) ==
-              0x19c20420);
-static_assert(encode(mops::SetInstruction{.stage = mops::Stage::Main, .rd = 0, .rs = 2, .rn = 1, .write = {}}) ==
-              0x19c24420);
-static_assert(encode(mops::SetInstruction{.stage = mops::Stage::Epilogue, .rd = 0, .rs = 2, .rn = 1, .write = {}}) ==
-              0x19c28420);
+  std::vector<std::uint32_t> words;
+  words.reserve(buf.size() / 4);
+  for (std::size_t i{0}; i < buf.size(); i += 4) {
+    words.push_back(std::uint32_t{buf[i]} | (std::uint32_t{buf[i + 1]} << 8) | (std::uint32_t{buf[i + 2]} << 16) |
+                    (std::uint32_t{buf[i + 3]} << 24));
+  }
+  return words;
+}
 
 } // namespace
 
@@ -137,10 +155,22 @@ static_assert(encode(mops::SetInstruction{.stage = mops::Stage::Epilogue, .rd = 
 // Small demo emulator //
 /////////////////////////
 
-int main() {
+int main(int argc, const char* argv[]) {
+  if (argc <= 1) {
+    std::cout << "no program file provided" << std::endl;
+    return 1;
+  }
+
+  std::vector<std::uint32_t> program;
+  try {
+    program = load_program(argv[1]);
+  } catch (const std::runtime_error& e) {
+    std::cout << e.what() << std::endl;
+    return 1;
+  }
+
   const std::uint64_t kMemBase{0x0000};
-  const std::uint64_t kMemSize{32};
-  const std::uint64_t kSize{20};
+  const std::uint64_t kMemSize{512};
 
   CpuState cpu{};
   Memory ram{kMemBase, kMemSize};
@@ -149,19 +179,11 @@ int main() {
 
   MopsAdapter adapter{cpu, ram, cfg};
 
-  cpu.x.at(0) = kMemBase;
-  cpu.x.at(1) = kSize;
-  cpu.x.at(2) = 0xAB;
   cpu.irq = true; // Interrupt as soon as its allowed, meaning after set_block_bytes in Main stage
 
-  const std::array<std::uint32_t, 3> program{
-      encode(mops::SetInstruction{.stage = mops::Stage::Prologue, .rd = 0, .rs = 2, .rn = 1, .write = {}}),
-      encode(mops::SetInstruction{.stage = mops::Stage::Main, .rd = 0, .rs = 2, .rn = 1, .write = {}}),
-      encode(mops::SetInstruction{.stage = mops::Stage::Epilogue, .rd = 0, .rs = 2, .rn = 1, .write = {}})};
-
-  print_cpu(cpu, "Initial State");
-
   while (cpu.pc < program.size() * 4) {
+    const CpuState before{cpu};
+
     const std::uint32_t instr{program[cpu.pc / 4]};
     mops::StepResult result{mops::step(adapter, instr)};
 
@@ -170,10 +192,10 @@ int main() {
     std::visit(mops::overloaded{
                    [&](mops::Completed) {
                      cpu.pc += 4;
-                     print_cpu(cpu, "Completed");
+                     print_changes(before, cpu, "Completed");
                    },
                    [&](mops::Interrupted) {
-                     print_cpu(cpu, "Interrupted");
+                     print_changes(before, cpu, "Interrupted");
                      std::cout << "Handling interrupt and resuming..." << std::endl;
                      cpu.irq = false;
                    },
@@ -194,8 +216,17 @@ int main() {
                      stop = true;
                    },
                    [&](mops::NotMops) {
-                     std::cout << "NotMops" << std::endl;
-                     stop = true;
+                     const auto decode_result{movz::decode(instr)};
+                     if (!decode_result) {
+                       std::cout << "Not Mops or MOVZ" << std::endl;
+                       stop = true;
+                       return;
+                     }
+                     if (decode_result->reg != 31) { // Dont touch xzr
+                       cpu.x.at(decode_result->reg) = std::uint64_t{decode_result->imm} << (decode_result->shift * 16);
+                     }
+                     cpu.pc += 4;
+                     print_changes(before, cpu, "MOVZ");
                    },
                },
                result);
@@ -205,9 +236,12 @@ int main() {
     }
   }
 
-  std::cout << std::format("\nRAM [0x{:04X} ... 0x{:04X}):", kMemBase, kMemBase + kMemSize) << std::endl;
-  for (std::byte val : ram.inspect()) {
-    std::cout << std::format("{:02X} ", static_cast<int>(val));
+  std::cout << std::format("\nRAM [0x{:04X} ... 0x{:04X}):", kMemBase, kMemBase + kMemSize);
+  for (std::size_t i{0}; i < ram.inspect().size(); i++) {
+    if (i % 16 == 0) {
+      std::cout << std::format("\n0x{:04X}:", i);
+    }
+    std::cout << std::format(" {:02X}", static_cast<int>(ram.inspect()[i]));
   }
   std::cout << std::endl;
   return 0;
