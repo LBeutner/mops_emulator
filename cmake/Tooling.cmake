@@ -2,6 +2,7 @@ file(GLOB_RECURSE MOPS_SOURCES CONFIGURE_DEPENDS
   ${PROJECT_SOURCE_DIR}/include/*.hpp
   ${PROJECT_SOURCE_DIR}/tests/*.cpp
   ${PROJECT_SOURCE_DIR}/tests/*.hpp
+  ${PROJECT_SOURCE_DIR}/examples/*.cpp
 )
 
 find_program(CLANG_FORMAT NAMES clang-format)

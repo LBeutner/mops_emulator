@@ -10,3 +10,4 @@ HeaderFilterRegex: '.*/include/.*'
 WarningsAsErrors: '*'
 CheckOptions:
   readability-function-cognitive-complexity.Threshold: 50
+  bugprone-easily-swappable-parameters.MinimumLength: 3
