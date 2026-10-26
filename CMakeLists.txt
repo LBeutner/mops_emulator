@@ -9,6 +9,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MOPS_BUILD_TESTS "Build the mops tests" ${PROJECT_IS_TOP_LEVEL})
 option(MOPS_WARNINGS_AS_ERRORS "Treat warnings as errors" ${PROJECT_IS_TOP_LEVEL})
+option(MOPS_BUILD_DEMO "Build the mops demo" ${PROJECT_IS_TOP_LEVEL})
 
 add_library(mops INTERFACE)
 add_library(mops::mops ALIAS mops)
@@ -37,6 +38,11 @@ add_library(mops_warnings INTERFACE)
 target_compile_options(mops_warnings INTERFACE -Wall -Wextra -Wpedantic)
 if(MOPS_WARNINGS_AS_ERRORS)
   target_compile_options(mops_warnings INTERFACE -Werror)
+endif()
+
+if(MOPS_BUILD_DEMO)
+  add_executable(demo examples/demo.cpp)
+  target_link_libraries(demo PRIVATE mops::mops mops_warnings)
 endif()
 
 if(MOPS_BUILD_TESTS)

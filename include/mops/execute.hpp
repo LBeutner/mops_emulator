@@ -7,8 +7,10 @@ namespace mops {
 
 template <Host H> ExecuteResult execute(H& host, const Decoded& decoded) {
   return std::visit<ExecuteResult>(
-      overloaded{[&host](const SetInstruction& instr) { return detail::execute_set(host, instr); },
-                 []([[maybe_unused]] const CpyInstruction& instr) { return Unsupported{}; }},
+      overloaded{
+          [&host](const SetInstruction& instr) { return detail::execute_set(host, instr); },
+          []([[maybe_unused]] const CpyInstruction& instr) { return Unsupported{}; },
+      },
       decoded);
 }
 
