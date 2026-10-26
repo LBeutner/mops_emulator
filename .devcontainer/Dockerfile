@@ -4,11 +4,13 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Core build tools and LLVM toolchain pinned to v18
 RUN apt-get update && apt-get install -y --no-install-recommends \
+  bash-completion \
   ca-certificates \
   cmake \
   git \
   locales \
   ninja-build \
+  python3 \
   sudo \
   clang-18 \
   clangd-18 \
@@ -32,7 +34,8 @@ RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100 \
   && update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-18 100 \
   && update-alternatives --install /usr/bin/run-clang-tidy run-clang-tidy /usr/bin/run-clang-tidy-18 100 \
   && update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-18 100 \
-  && update-alternatives --install /usr/bin/llvm-mc llvm-mc /usr/bin/llvm-mc-18 100
+  && update-alternatives --install /usr/bin/llvm-mc llvm-mc /usr/bin/llvm-mc-18 100 \
+  && update-alternatives --install /usr/bin/llvm-objcopy llvm-objcopy /usr/bin/llvm-objcopy-18 100
 
 # Set default compilers
 ENV CC=clang
