@@ -1,3 +1,7 @@
+if(CMAKE_EXPORT_COMPILE_COMMANDS)
+  file(CREATE_LINK ${CMAKE_BINARY_DIR}/compile_commands.json ${PROJECT_SOURCE_DIR}/build/compile_commands.json SYMBOLIC)
+endif()
+
 file(GLOB_RECURSE MOPS_SOURCES CONFIGURE_DEPENDS
   ${PROJECT_SOURCE_DIR}/include/*.hpp
   ${PROJECT_SOURCE_DIR}/tests/*.cpp
