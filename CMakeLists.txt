@@ -35,7 +35,7 @@ target_sources(mops INTERFACE
 target_compile_features(mops INTERFACE cxx_std_20)
 
 add_library(mops_warnings INTERFACE)
-target_compile_options(mops_warnings INTERFACE -Wall -Wextra -Wpedantic)
+target_compile_options(mops_warnings INTERFACE -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion)
 if(MOPS_WARNINGS_AS_ERRORS)
   target_compile_options(mops_warnings INTERFACE -Werror)
 endif()

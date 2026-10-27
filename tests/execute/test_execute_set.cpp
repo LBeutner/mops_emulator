@@ -86,8 +86,8 @@ TEST_P(SetSweep, BehavesLikeMemset) {
   const auto [size, prologue, epilogue, block] = GetParam();
   DummyHost host{make_host(size)};
   host.config = {.set_prologue_bytes = prologue, .set_epilogue_bytes = epilogue, .set_block_bytes = block};
-  const std::uint64_t pre{std::min<std::uint64_t>(prologue, size)};
-  const std::uint64_t post{std::min<std::uint64_t>(epilogue, size - pre)};
+  const std::uint64_t pre{std::min<std::uint64_t>(static_cast<std::uint64_t>(prologue), size)};
+  const std::uint64_t post{std::min<std::uint64_t>(static_cast<std::uint64_t>(epilogue), size - pre)};
 
   EXPECT_EQ(run(host, Stage::Prologue), kCompleted);
   EXPECT_EQ(host.nzcv, kOptionB);

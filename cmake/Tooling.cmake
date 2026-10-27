@@ -24,8 +24,8 @@ find_program(RUN_CLANG_TIDY NAMES run-clang-tidy)
 if(RUN_CLANG_TIDY)
   add_custom_target(tidy
     COMMAND ${RUN_CLANG_TIDY} -p ${CMAKE_BINARY_DIR} -quiet
-            "-header-filter=^${PROJECT_SOURCE_DIR}/include/"
-            "^${PROJECT_SOURCE_DIR}/tests/"
+            "-header-filter=^${PROJECT_SOURCE_DIR}/(include|examples)/"
+            "^${PROJECT_SOURCE_DIR}/(tests|examples)/"
     COMMENT "Running clang-tidy"
     VERBATIM
   )
