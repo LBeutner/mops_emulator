@@ -15,7 +15,8 @@ mops::StepResult result{mops::step(host, word)}; // decode + execute one instruc
 
 ### Docker (recommended)
 
-The dev container has the exact toolchain that CI uses (LLVM 18, CMake, Ninja). In VS Code use "Reopen in Container", or:
+The dev container has the exact toolchain that CI uses (LLVM 18, GCC 13, CMake, Ninja).
+In VS Code use "Reopen in Container", or:
 
 ```bash
 docker build -t mops-dev .devcontainer
@@ -29,6 +30,8 @@ Inside the container:
 cmake --preset debug && cmake --build --preset debug && ctest --preset debug
 # same with sanitizers
 cmake --preset asan && cmake --build --preset asan && ctest --preset asan
+# same with GCC
+cmake --preset gcc-release && cmake --build --preset gcc-release && ctest --preset gcc-release
 # formatting and clang-tidy
 cmake --build --preset format-check && cmake --build --preset tidy
 # run the demo
@@ -37,7 +40,7 @@ cmake --build --preset format-check && cmake --build --preset tidy
 
 ### Native
 
-You need `CMake 3.25+`, `Ninja` and `clang++ 18` with `libstdc++ 13`. The asan preset also needs `libclang-rt-18-dev`, the lint presets need `clang-format-18` and `clang-tidy-18`.
+You need `CMake 3.25+`, `Ninja` and `clang++ 18` with `libstdc++ 13`. The asan preset also needs `libclang-rt-18-dev`, the lint presets need `clang-format-18` and `clang-tidy-18`, the gcc-release preset needs `g++ 13` or newer.
 GoogleTest is downloaded on the first configure.
 After that, the commands are the same as above.
 `tools/` has three Python 3 scripts that use `llvm-mc-18`.
@@ -113,7 +116,7 @@ Checking whether MOPS is enabled at the current EL is also left to the emulator.
 
 ## Testing
 
-All tests use GoogleTest and run in CI for the debug, asan and release builds.
+All tests use GoogleTest and run in CI for the debug, asan, release and gcc-release builds.
 
 - **Decode**: compared against LLVM-18. The `gen_decode_golden.py` script builds every combination of the opcode fields with a subset of registers, lets `llvm-mc-18` disassemble them and stores the expected result. Register combinations that LLVM refuses to assemble are tested separately. Negative tests cover SETG*, invalid size bits and non-MOPS instructions.
 - **Execute**: a sweep over size, prologue size, epilogue size and block size checks that the result is always a correct memset and that the registers are right after every stage. Further tests cover interrupts and resuming, faults and restarting, the MOPS exception values and invalid register combinations. The test host fills its memory with a fixed value and throws when the xzr register is touched.
