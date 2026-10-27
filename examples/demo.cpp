@@ -127,7 +127,7 @@ void print_changes(const CpuState& before, const CpuState& after, std::string_vi
   if (flags(before) != flags(after)) {
     std::cout << std::format(" (nzcv {} -> {})", flags(before), flags(after));
   }
-  std::cout << std::endl;
+  std::cout << "\n";
 }
 
 std::vector<std::uint32_t> load_program(const std::filesystem::path& path) {
@@ -149,28 +149,11 @@ std::vector<std::uint32_t> load_program(const std::filesystem::path& path) {
   return words;
 }
 
-} // namespace
-
-/////////////////////////
-// Small demo emulator //
-/////////////////////////
-
-int main(int argc, const char* argv[]) {
-  if (argc <= 1) {
-    std::cout << "no program file provided" << std::endl;
-    return 1;
-  }
-
-  std::vector<std::uint32_t> program;
-  try {
-    program = load_program(argv[1]);
-  } catch (const std::runtime_error& e) {
-    std::cout << e.what() << std::endl;
-    return 1;
-  }
-
+int run(const char* path) {
   const std::uint64_t kMemBase{0x0000};
   const std::uint64_t kMemSize{512};
+
+  const std::vector<std::uint32_t> program{load_program(path)};
 
   CpuState cpu{};
   Memory ram{kMemBase, kMemSize};
@@ -196,29 +179,29 @@ int main(int argc, const char* argv[]) {
                    },
                    [&](mops::Interrupted) {
                      print_changes(before, cpu, "Interrupted");
-                     std::cout << "Handling interrupt and resuming..." << std::endl;
+                     std::cout << "Handling interrupt and resuming..." << "\n";
                      cpu.irq = false;
                    },
                    [&](mops::Fault fault) {
-                     std::cout << "Memory fault at " << std::format("0x{:08X}", fault.address) << std::endl;
+                     std::cout << "Memory fault at " << std::format("0x{:08X}", fault.address) << "\n";
                      stop = true;
                    },
                    [&](mops::MopsException exception) {
-                     std::cout << "MopsException with ISS: " << std::format("0x{:07X}", exception.iss) << std::endl;
+                     std::cout << "MopsException with ISS: " << std::format("0x{:07X}", exception.iss) << "\n";
                      stop = true;
                    },
                    [&](mops::Undefined) {
-                     std::cout << "Undefined, either CU or malformed opcodes" << std::endl;
+                     std::cout << "Undefined, either CU or malformed opcodes" << "\n";
                      stop = true;
                    },
                    [&](mops::Unsupported) {
-                     std::cout << "Unsupported, not SET*" << std::endl;
+                     std::cout << "Unsupported, not SET*" << "\n";
                      stop = true;
                    },
                    [&](mops::NotMops) {
                      const auto decode_result{movz::decode(instr)};
                      if (!decode_result) {
-                       std::cout << "Not Mops or MOVZ" << std::endl;
+                       std::cout << "Not Mops or MOVZ" << "\n";
                        stop = true;
                        return;
                      }
@@ -243,6 +226,26 @@ int main(int argc, const char* argv[]) {
     }
     std::cout << std::format(" {:02X}", static_cast<int>(ram.inspect()[i]));
   }
-  std::cout << std::endl;
+  std::cout << "\n";
   return 0;
+}
+
+} // namespace
+
+/////////////////////////
+// Small demo emulator //
+/////////////////////////
+
+int main(int argc, const char* argv[]) {
+  if (argc <= 1) {
+    std::cout << "no program file provided" << "\n";
+    return 1;
+  }
+
+  try {
+    return run(argv[1]);
+  } catch (const std::exception& e) {
+    std::cout << e.what() << "\n";
+    return 1;
+  }
 }
