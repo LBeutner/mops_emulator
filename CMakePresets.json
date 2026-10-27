@@ -13,6 +13,11 @@
       }
     },
     {
+      "name": "gcc",
+      "hidden": true,
+      "cacheVariables": { "CMAKE_CXX_COMPILER": "g++" }
+    },
+    {
       "name": "sanitize",
       "hidden": true,
       "cacheVariables": {
@@ -38,6 +43,12 @@
       "displayName": "Release",
       "inherits": "base",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "gcc-release",
+      "displayName": "GCC Release",
+      "inherits": ["gcc", "base"],
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
   ],
   "buildPresets": [
@@ -52,6 +63,10 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release"
     },
     {
       "name": "format",
@@ -83,6 +98,11 @@
     {
       "name": "release",
       "configurePreset": "release",
+      "output": { "outputOnFailure": true }
+    },
+    {
+      "name": "gcc-release",
+      "configurePreset": "gcc-release",
       "output": { "outputOnFailure": true }
     }
   ]

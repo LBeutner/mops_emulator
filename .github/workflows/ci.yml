@@ -39,3 +39,9 @@ jobs:
           $DEV cmake --preset release
           $DEV cmake --build --preset release
           $DEV ctest --preset release --no-tests=error
+
+      - name: GCC-Release
+        run: |
+          $DEV cmake --preset gcc-release
+          $DEV cmake --build --preset gcc-release
+          $DEV ctest --preset gcc-release --no-tests=error

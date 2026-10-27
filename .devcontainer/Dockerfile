@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   cmake \
   git \
+  g++ \
   locales \
   ninja-build \
   python3 \
