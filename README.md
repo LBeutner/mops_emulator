@@ -84,7 +84,7 @@ access and memory chunk, templates let these calls be inlined instead of going t
 **Implementation defined choices.** The Arm spec leaves many details to the hardware vendor.
 Since the goal is running code on hosts without FEAT_MOPS, and correct software doesn't depend on these details, most of them are fixed.
 Only two things are configurable through `ImplDefined`: how much work the prologue and epilogue do (mostly for testing), and the block size, which decides how often the Main stage can be interrupted.
-Fixed: Option B, no option check when there is nothing left to do, parameters are never rejected as ill-formed, and constrained unpredictable register combinations are UNDEFINED instead of NOP.
+Fixed: Option B, no option check when there is nothing left to do, but checked even when the current stage has nothing to do (`MemStageSetZeroSizeCheck() = true`), parameters are never rejected as ill-formed, and constrained unpredictable register combinations are UNDEFINED instead of NOP.
 
 **Memory writes.** The library writes in chunks up to 4096 bytes and only retries failing chunks byte by byte, to reduce overhead. Faults return the exact byte, just like the Arm pseudocode.
 
@@ -106,6 +106,7 @@ bool write_mem(std::uint64_t addr, std::span<const std::byte> buf, mops::AccessA
 ```
 
 Optional: `should_yield()` to interrupt the Main stage, `impl_defined()` for the configurable choices and `host_ptr()` for direct memory access.
+`host_ptr()` must return `nullptr` unless the whole range is accessible.
 
 The library never touches the PC or takes exceptions. Depending on the result, the emulator advances the PC (`Completed`), runs the instruction again later (`Interrupted`), raises the matching exception (`Fault`, `MopsException`, `Undefined`) or hands the word to other decoders (`NotMops`) or stops/logs on (`Unsupported`).
 Checking whether MOPS is enabled at the current EL is also left to the emulator.
@@ -120,12 +121,11 @@ All tests use GoogleTest and run in CI for the debug, asan and release builds.
 
 ## Limitations
 
+- Execute is only tested against my own understanding of the Arm spec and uses no external reference.
 - Implementation choices that depend on the address can't be expressed.
 - When a chunk write fails, the byte by byte retry writes some bytes twice. This might cause problems for memory with side effects.
-- `host_ptr` (direct memory access) is not covered by tests.
 
 ## With more time
 
 - CPYF*, then CPY*, reusing the SET structure.
 - Function callbacks in `ImplDefined` for implementation choices that depend on the address.
-- A test host with `host_ptr()` to cover direct memory access.
