@@ -90,8 +90,10 @@ inline std::optional<MopsException> check_set_params(const SetParams& params, co
     return MopsException{.iss = set_iss(synd)};
   };
 
-  // wrong sizes or handed option A state
-  if (params.stagesetsize != 0 && params.setsize != 0 && (params.nzcv & kPstateC) == 0) {
+  // Option mismatch when work is left
+  // (MemStageSetZeroSizeCheck() = TRUE)
+  // (MemSetZeroSizeCheck() = FALSE)
+  if (params.setsize != 0 && (params.nzcv & kPstateC) == 0) {
     return exception(true);
   }
 

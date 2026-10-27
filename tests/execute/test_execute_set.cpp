@@ -226,7 +226,7 @@ TEST(SetExecute, PrologueFaultLeavesNzcv) {
 ////////////////////
 
 TEST(SetExecute, OptionAFormatRaisesMismatch) {
-  DummyHost host{make_host(10)};
+  DummyHost host{make_host(static_cast<std::uint64_t>(-10))};
   // Registers in Option A format
   host.nzcv = kOptionA;
 
@@ -243,7 +243,7 @@ TEST(SetExecute, OptionAFormatRaisesMismatch) {
   expected_fault = mops::MopsException{.iss = 0x010E0041};
   EXPECT_EQ(run(host, Stage::Epilogue, attr), expected_fault);
   // No memory touched
-  EXPECT_EQ(host.regs[kSizeReg], 10);
+  EXPECT_EQ(host.regs[kSizeReg], static_cast<std::uint64_t>(-10));
   EXPECT_TRUE(mem_correct(host, 0));
 }
 
@@ -256,6 +256,20 @@ TEST(SetExecute, EpilogueWithWrongSizeRaisesException) {
   mops::ExecuteResult expected_fault{mops::MopsException{.iss = 0x01040041}};
   EXPECT_EQ(run(host, Stage::Epilogue), expected_fault);
   // No memory touched
+  EXPECT_TRUE(mem_correct(host, 0));
+}
+
+TEST(SetExecute, EpilogueWithWrongSizeAndOptionIsMismatch) {
+  DummyHost host{make_host(static_cast<std::uint64_t>(-10))};
+  host.nzcv = kOptionA;
+
+  // Epilogue size 0 but 10 bytes left and wrong option
+  // Expected iss has formatoption = 0b10
+  mops::ExecuteResult expected_fault{mops::MopsException{.iss = 0x01060041}};
+  EXPECT_EQ(run(host, Stage::Epilogue), expected_fault);
+  // No memory touched
+  EXPECT_EQ(host.regs[kSizeReg], static_cast<std::uint64_t>(-10));
+  EXPECT_EQ(host.regs[kDestReg], kDest);
   EXPECT_TRUE(mem_correct(host, 0));
 }
 
@@ -305,4 +319,64 @@ TEST(SetExecute, ConstrainedUnpredictableIsUndefined) {
   EXPECT_EQ(host.regs[kSizeReg], 10U);
   EXPECT_EQ(host.nzcv, kOptionB);
   EXPECT_TRUE(mem_correct(host, 0));
+}
+
+//////////////////////////
+// Direct memory access //
+//////////////////////////
+
+TEST(SetExecute, DirectMemoryAccess) {
+  DummyHost host{make_host(100)};
+  host.direct_mem = true;
+
+  for (const Stage stage : {Stage::Prologue, Stage::Main, Stage::Epilogue}) {
+    EXPECT_EQ(run(host, stage), kCompleted);
+  }
+  EXPECT_TRUE(mem_correct(host, 100));
+  // Everything went through host_ptr()
+  EXPECT_EQ(host.write_calls, 0);
+}
+
+TEST(SetExecute, DirectMemoryFallsBackOnFault) {
+  DummyHost host{make_host(100)};
+  host.direct_mem = true;
+  const std::uint64_t fault_offset{50};
+  host.fault_address = kDest + fault_offset;
+
+  EXPECT_EQ(run(host, Stage::Prologue), kCompleted);
+
+  // Host refuses ptr, due to fault, write_mem is used instead
+  const mops::ExecuteResult expected_fault{mops::Fault{.address = kDest + fault_offset, .is_write = true}};
+  EXPECT_EQ(run(host, Stage::Main), expected_fault);
+
+  EXPECT_GT(host.write_calls, 0);
+  EXPECT_EQ(host.regs[kDestReg], kDest + fault_offset);
+  EXPECT_TRUE(mem_correct(host, fault_offset));
+}
+
+////////////////
+// OoB Config //
+////////////////
+
+TEST(SetExecute, OutOfBoundsStageSize) {
+  DummyHost host{make_host(100)};
+  host.config.set_epilogue_bytes = -10;
+  host.config.set_prologue_bytes = -10;
+
+  // Stagesizes get clamped to 0, all work done in Main
+  for (const Stage stage : {Stage::Prologue, Stage::Main, Stage::Epilogue}) {
+    EXPECT_EQ(run(host, stage), kCompleted);
+  }
+  EXPECT_TRUE(mem_correct(host, 100));
+}
+
+TEST(SetExecute, OutOfBoundsBlockSize) {
+  DummyHost host{make_host(100)};
+  host.config.set_block_bytes = -10;
+
+  // Block size clamped to 1
+  for (const Stage stage : {Stage::Prologue, Stage::Main, Stage::Epilogue}) {
+    EXPECT_EQ(run(host, stage), kCompleted);
+  }
+  EXPECT_TRUE(mem_correct(host, 100));
 }

@@ -28,9 +28,9 @@ struct LoopResult {
 };
 
 // At most size bytes, at least 0 for size >= 0.
-// For a negative size (Option A format in M/E) the stage does nothing until check_set_params() raises the exception.
+// For a negative size (Option A format in M/E) we return 0 and check_set_params() raises the exception.
 constexpr std::int64_t clamp_to_size(std::int64_t bytes, std::int64_t size) {
-  return std::min(std::max<std::int64_t>(bytes, 0), size);
+  return (size >= 0) ? std::clamp<std::int64_t>(bytes, 0, size) : 0;
 }
 
 // SETSizeChoice(), clamped to [1, stagesize]
